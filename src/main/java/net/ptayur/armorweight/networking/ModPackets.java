@@ -2,10 +2,11 @@ package net.ptayur.armorweight.networking;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.network.ChannelBuilder;
+import net.minecraftforge.network.SimpleChannel;
+import net.minecraftforge.network.Channel;
 import net.minecraftforge.network.NetworkDirection;
-import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.network.simple.SimpleChannel;
 import net.ptayur.armorweight.ArmorWeight;
 import net.ptayur.armorweight.networking.packet.WeightMapS2CPacket;
 import net.ptayur.armorweight.networking.packet.PlayerWeightS2CPacket;
@@ -19,11 +20,11 @@ public class ModPackets {
     }
 
     public static void register() {
-        SimpleChannel net = NetworkRegistry.ChannelBuilder
+        SimpleChannel net = ChannelBuilder
                 .named(new ResourceLocation(ArmorWeight.MOD_ID, "messages"))
-                .networkProtocolVersion(() -> "1.0")
-                .clientAcceptedVersions(s -> true)
-                .serverAcceptedVersions(s -> true)
+                .networkProtocolVersion(1)
+                .clientAcceptedVersions(Channel.VersionTest.exact(1))
+                .serverAcceptedVersions(Channel.VersionTest.exact(1))
                 .simpleChannel();
 
         INSTANCE = net;
@@ -42,7 +43,7 @@ public class ModPackets {
     }
 
     public static <MSG> void sendToClient(MSG message, ServerPlayer player) {
-        INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), message);
+        INSTANCE.send(message, PacketDistributor.PLAYER.with(player));
     }
 
 }

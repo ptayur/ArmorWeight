@@ -1,10 +1,8 @@
 package net.ptayur.armorweight.networking.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.ptayur.armorweight.client.ClientWeightData;
-
-import java.util.function.Supplier;
 
 public class PlayerWeightS2CPacket {
     private final int playerWeight;
@@ -20,8 +18,7 @@ public class PlayerWeightS2CPacket {
         buf.writeInt(playerWeight);
     }
 
-    public void handle(Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    public void handle(CustomPayloadEvent.Context context) {
         context.enqueueWork(() -> ClientWeightData.setPlayerWeight(playerWeight));
     }
 }
