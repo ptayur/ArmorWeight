@@ -1,11 +1,10 @@
 package net.ptayur.armorweight.networking.packet;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.event.network.CustomPayloadEvent;
 import net.ptayur.armorweight.client.ClientWeightData;
 
 import java.util.Map;
-import java.util.function.Supplier;
 
 public class WeightMapS2CPacket {
     private final Map<String, Integer> weightMap;
@@ -21,8 +20,7 @@ public class WeightMapS2CPacket {
         buf.writeMap(weightMap, FriendlyByteBuf::writeUtf, FriendlyByteBuf::writeInt);
     }
 
-    public void handle(Supplier<NetworkEvent.Context> supplier) {
-        NetworkEvent.Context context = supplier.get();
+    public void handle(CustomPayloadEvent.Context context) {
         context.enqueueWork(() -> ClientWeightData.setWeightMap(weightMap));
     }
 }
