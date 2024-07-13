@@ -12,6 +12,6 @@ public class EncumbranceEffect extends MobEffect {
 
     public EncumbranceEffect(MobEffectCategory mobEffectCategory, int color){
         super(mobEffectCategory, color);
-        this.addAttributeModifier(Attributes.MOVEMENT_SPEED, SLOWNESS_MODIFIER_UUID.toString(), -0.15D, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        this.addAttributeModifier(Attributes.MOVEMENT_SPEED, SLOWNESS_MODIFIER_UUID.toString(), -0.15D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 }

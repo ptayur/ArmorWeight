@@ -20,10 +20,10 @@ public class ArmorWeight {
 
     public ArmorWeight() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
         ModEffects.register(modEventBus);
         ModEnchantments.register(modEventBus);
         MinecraftForge.EVENT_BUS.register(this);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::commonSetup);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.ptayur.armorweight.mixin",
+  "compatibilityLevel": "JAVA_18",
+  "client" : [
+    "GuiMixin"
+  ],
+  "refmap": "mixins.armorweight.refmap.json",
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

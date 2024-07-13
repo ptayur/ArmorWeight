@@ -7,29 +7,17 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.ptayur.armorweight.ArmorWeight;
 import net.ptayur.armorweight.client.ClientWeightData;
-import net.ptayur.armorweight.client.WeightHudOverlay;
 
 import java.util.List;
 import java.util.Map;
 
 public class ClientEvents {
-    @Mod.EventBusSubscriber(modid = ArmorWeight.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
-    public static class ClientModBusEvents {
-        @SubscribeEvent
-        public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
-            event.registerBelow(VanillaGuiOverlay.CHAT_PANEL.id(), "hud_weight", WeightHudOverlay.HUD_WEIGHT);
-            event.registerBelow(VanillaGuiOverlay.ARMOR_LEVEL.id(), "hud_empty_armor", WeightHudOverlay.HUD_EMPTY_ARMOR);
-        }
-    }
-
     @Mod.EventBusSubscriber(modid = ArmorWeight.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class ClientForgeBusEvents {
          @SubscribeEvent

@@ -1,12 +1,15 @@
 package net.ptayur.armorweight.event;
 
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -73,24 +76,27 @@ public class ServerEvents {
                 if (registryKey != null) {
                     String registryName = registryKey.toString();
                     int armorItemWeight = ModCommonConfig.getConfigWeight(registryName);
-                    Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(itemStack);
-                    int featherArmorLevel = enchantments.getOrDefault(ModEnchantments.LIGHTNESS.get(), 0);
-                    weight += (float) (armorItemWeight * (1 - 0.15 * featherArmorLevel));
+                    int lightnessLevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.LIGHTNESS.get(), entity);
+                    weight += (float) (armorItemWeight * (1 - 0.15 * lightnessLevel));
                 }
             }
             return Math.min(Math.round(weight), 20);
         }
 
         private static void applyEffect(LivingEntity entity, int weight) {
-            entity.removeEffect(ModEffects.ENCUMBRANCE.get());
+            if (ModEffects.ENCUMBRANCE.getKey() == null) {
+                return;
+            }
+            Holder<MobEffect> encumbranceHolder = entity.registryAccess().registryOrThrow(Registries.MOB_EFFECT).getHolderOrThrow(ModEffects.ENCUMBRANCE.getKey());
+            entity.removeEffect(encumbranceHolder);
             if (weight > 18) {
-                entity.addEffect(new MobEffectInstance(ModEffects.ENCUMBRANCE.get(), -1, 2, false, false, true));
+                entity.addEffect(new MobEffectInstance(encumbranceHolder, -1, 2, false, false, true));
             } else if (weight > 14) {
-                entity.addEffect(new MobEffectInstance(ModEffects.ENCUMBRANCE.get(), -1, 1, false, false, true));
+                entity.addEffect(new MobEffectInstance(encumbranceHolder, -1, 1, false, false, true));
             } else if (weight > 8) {
-                entity.addEffect(new MobEffectInstance(ModEffects.ENCUMBRANCE.get(), -1, 0, false, false, true));
+                entity.addEffect(new MobEffectInstance(encumbranceHolder, -1, 0, false, false, true));
             } else {
-                entity.removeEffect(ModEffects.ENCUMBRANCE.get());
+                entity.removeEffect(encumbranceHolder);
             }
         }
     }
