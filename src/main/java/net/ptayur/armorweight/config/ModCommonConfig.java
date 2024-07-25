@@ -1,141 +1,133 @@
 package net.ptayur.armorweight.config;
 
-import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static net.ptayur.armorweight.ArmorWeight.LOGGER;
+import static net.ptayur.armorweight.util.ConfigUtils.*;
 
 
 public class ModCommonConfig {
-    private static final CommentedFileConfig COMMON_CONFIG = CommentedFileConfig.builder(Paths.get("config", "armorweight_common.toml"))
+    private static final CommentedFileConfig COMMON_CONFIG = CommentedFileConfig
+            .builder(Paths.get("config", "armorweight_common.toml"))
             .sync()
             .autosave()
+            .autoreload()
             .preserveInsertionOrder()
             .build();
 
-    public static void initConfigs() {
-        if (!Files.exists(COMMON_CONFIG.getNioPath())) {
-            initCommon();
+    private static final Map<String, Boolean> SETTINGS = new LinkedHashMap<>() {{
+        put("isMobsAffected", true);
+        put("isDependsOnProtection", false);
+    }};
+
+    private static final Map<String, String> SETTINGS_COMMENTS = new LinkedHashMap<>() {{
+        put("isMobsAffected", "Determines whether a weight will be applied to mobs.");
+        put("isDependsOnProtection", "Determines whether weight will depend on the protection value.");
+        }};
+
+    private static final Map<String, Integer> THRESHOLDS = new LinkedHashMap<>() {{
+        put("Level1EffectThreshold", 8);
+        put("Level2EffectThreshold", 14);
+        put("Level3EffectThreshold", 18);
+    }};
+
+    private static final Map<String, String> THRESHOLDS_COMMENTS = new LinkedHashMap<>() {{
+        put("Level1EffectThreshold", """
+                Determines from which weight level the corresponding effect will be applied.\
+
+                The values must be in the range [0, 19] and be greater than the previous threshold value.\
+                
+                Lightness I threshold.""");
+        put("Level2EffectThreshold", "Lightness II threshold.");
+        put("Level3EffectThreshold", "Lightness III threshold.");
+    }};
+
+    private static final Map<String, Number> WEIGHT = new LinkedHashMap<>() {{
+        put("minecraft:leather_helmet", 1f);
+        put("minecraft:leather_chestplate", 1f);
+        put("minecraft:leather_leggings", 1f);
+        put("minecraft:leather_boots", 1f);
+        put("minecraft:chainmail_helmet", 2f);
+        put("minecraft:chainmail_chestplate", 2f);
+        put("minecraft:chainmail_leggings", 2f);
+        put("minecraft:chainmail_boots", 2f);
+        put("minecraft:iron_helmet", 2f);
+        put("minecraft:iron_chestplate", 3f);
+        put("minecraft:iron_leggings", 2f);
+        put("minecraft:iron_boots", 2f);
+        put("minecraft:golden_helmet", 3f);
+        put("minecraft:golden_chestplate", 4f);
+        put("minecraft:golden_leggings", 4f);
+        put("minecraft:golden_boots", 3f);
+        put("minecraft:diamond_helmet", 4f);
+        put("minecraft:diamond_chestplate", 4f);
+        put("minecraft:diamond_leggings", 4f);
+        put("minecraft:diamond_boots", 4f);
+        put("minecraft:netherite_helmet", 5f);
+        put("minecraft:netherite_chestplate", 5f);
+        put("minecraft:netherite_leggings", 5f);
+        put("minecraft:netherite_boots", 5f);
+        put("minecraft:turtle_helmet", 3f);
+    }};
+
+    private static final Map<String, String> WEIGHT_COMMENTS = new LinkedHashMap<>() {{
+        put("minecraft:leather_helmet", """
+                Determines the weight of armor elements. Values must be in the range [0, 20].\
+                
+                Example:"[mod_id]:[item_id]" = [value].""");
+    }};
+
+    private static final Map<String, List<Map<String, ?>>> SECTIONS_MAPPING = new LinkedHashMap<>() {{
+        put("Settings", new ArrayList<>() {{
+            add(SETTINGS);
+            add(SETTINGS_COMMENTS);
+        }});
+        put("Thresholds", new ArrayList<>() {{
+            add(THRESHOLDS);
+            add(THRESHOLDS_COMMENTS);
+        }});
+        put("Weight", new ArrayList<>() {{
+            add(WEIGHT);
+            add(WEIGHT_COMMENTS);
+        }});
+    }};
+
+    private static final Map<String, Boolean> LOADED_SETTINGS = new HashMap<>();
+
+    private static final List<Integer> LOADED_THRESHOLDS = new ArrayList<>();
+
+    private static final Map<String, Float> LOADED_WEIGHT_MAPPING = new HashMap<>();
+
+    public static void initConfig() {
+        COMMON_CONFIG.load();
+        if (COMMON_CONFIG.isEmpty()) {
+            createCommentedConfig(COMMON_CONFIG, SECTIONS_MAPPING);
         } else {
-            validateCommonConfig();
+            checkMissingEntries(COMMON_CONFIG, SECTIONS_MAPPING);
+            checkSettingsValues(COMMON_CONFIG, SETTINGS);
+            checkThresholdsValues(COMMON_CONFIG, THRESHOLDS);
+            checkWeightValues(COMMON_CONFIG, WEIGHT);
         }
-    }
-
-    private static void initCommon() {
-        COMMON_CONFIG.set("Settings.isMobsAffected", true);
-        COMMON_CONFIG.setComment("Settings.isMobsAffected", "Determines whether weight will be applied to mobs.");
-        COMMON_CONFIG.set("Weight.minecraft:leather_helmet", 1);
-        COMMON_CONFIG.setComment("Weight.minecraft:leather_helmet", "Determines the weight of armor elements. Example:\n\"[mod_id]:[item_id]\" = [value]. Values range from 0 to 20");
-        COMMON_CONFIG.set("Weight.minecraft:leather_chestplate", 1);
-        COMMON_CONFIG.set("Weight.minecraft:leather_leggings", 1);
-        COMMON_CONFIG.set("Weight.minecraft:leather_boots", 1);
-        COMMON_CONFIG.set("Weight.minecraft:chainmail_helmet", 2);
-        COMMON_CONFIG.set("Weight.minecraft:chainmail_chestplate", 2);
-        COMMON_CONFIG.set("Weight.minecraft:chainmail_leggings", 2);
-        COMMON_CONFIG.set("Weight.minecraft:chainmail_boots", 2);
-        COMMON_CONFIG.set("Weight.minecraft:iron_helmet", 2);
-        COMMON_CONFIG.set("Weight.minecraft:iron_chestplate", 3);
-        COMMON_CONFIG.set("Weight.minecraft:iron_leggings", 2);
-        COMMON_CONFIG.set("Weight.minecraft:iron_boots", 2);
-        COMMON_CONFIG.set("Weight.minecraft:golden_helmet", 3);
-        COMMON_CONFIG.set("Weight.minecraft:golden_chestplate", 4);
-        COMMON_CONFIG.set("Weight.minecraft:golden_leggings", 4);
-        COMMON_CONFIG.set("Weight.minecraft:golden_boots", 3);
-        COMMON_CONFIG.set("Weight.minecraft:diamond_helmet", 4);
-        COMMON_CONFIG.set("Weight.minecraft:diamond_chestplate", 4);
-        COMMON_CONFIG.set("Weight.minecraft:diamond_leggings", 4);
-        COMMON_CONFIG.set("Weight.minecraft:diamond_boots", 4);
-        COMMON_CONFIG.set("Weight.minecraft:netherite_helmet", 5);
-        COMMON_CONFIG.set("Weight.minecraft:netherite_chestplate", 5);
-        COMMON_CONFIG.set("Weight.minecraft:netherite_leggings", 5);
-        COMMON_CONFIG.set("Weight.minecraft:netherite_boots", 5);
-        COMMON_CONFIG.set("Weight.minecraft:turtle_helmet", 3);
-    }
-
-    private static void validateCommonConfig() {
-        COMMON_CONFIG.load();
-        CommentedConfig settings = COMMON_CONFIG.get("Settings");
-        for (Map.Entry<String, Object> entry : settings.valueMap().entrySet()) {
-            if (!(entry.getValue() instanceof Boolean)) {
-                String registryName = entry.getKey();
-                COMMON_CONFIG.set("Settings." + registryName, true);
-                LOGGER.warn("The entry \"{}\" in \"armorweight_common.toml\" is incorrect. Value changed to \"true\"",
-                        "Settings." + registryName);
-            }
-        }
-        CommentedConfig weightMap = COMMON_CONFIG.get("Weight");
-        List<String> keysToRemove = new ArrayList<>();
-        for (Map.Entry<String, Object> entry : weightMap.valueMap().entrySet()) {
-            String registryName = entry.getKey();
-            ResourceLocation registryKey = new ResourceLocation(registryName);
-            Item item = ForgeRegistries.ITEMS.getValue(registryKey);
-            if (!ForgeRegistries.ITEMS.containsKey(registryKey) || item == null) {
-                keysToRemove.add("Weight." + registryName);
-                LOGGER.warn("The entry \"{}\" in \"armorweight_common.toml\" doesn't exist in the registry. The entry has been deleted",
-                        "Weight." + registryName);
-                continue;
-            }
-            if (!isWearable(new ItemStack(item))) {
-                keysToRemove.add("Weight." + registryName);
-                LOGGER.warn("The entry \"{}\" in \"armorweight_common.toml\" can't be worn. The entry has been deleted",
-                        "Weight." + registryName);
-                continue;
-            }
-            if(!(entry.getValue() instanceof Integer)) {
-                COMMON_CONFIG.set("Weight." + registryName, 0);
-                LOGGER.warn("The entry \"{}\" in \"armorweight_common.toml\" is incorrect. Value changed to \"0\"",
-                        "Weight." + registryName);
-                continue;
-            }
-            int weight = (int) entry.getValue();
-            if (weight < 0) {
-                COMMON_CONFIG.set("Weight." + registryName, 0);
-                LOGGER.warn("The entry \"{}\" in \"armorweight_common.toml\" is below 0. Value changed to \"0\"",
-                        "Weight." + registryName);
-            } else if (weight > 20) {
-                COMMON_CONFIG.set("Weight." + registryName, 20);
-                LOGGER.warn("The entry \"{}\" in \"armorweight_common.toml\" is above 20. Value changed to \"20\"",
-                        "Weight." + registryName);
-            }
-        }
-        for (String key : keysToRemove) {
-            COMMON_CONFIG.remove(key);
-        }
-        COMMON_CONFIG.load();
-    }
-
-    private static boolean isWearable(ItemStack itemStack) {
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (slot.getType() == EquipmentSlot.Type.ARMOR && itemStack.getItem().canEquip(itemStack, slot, null)) {
-                return true;
-            }
-        }
-        return false;
+        loadSettingsSection(COMMON_CONFIG, LOADED_SETTINGS);
+        loadThresholdsSection(COMMON_CONFIG, LOADED_THRESHOLDS);
+        loadWeightSection(COMMON_CONFIG, LOADED_WEIGHT_MAPPING);
     }
 
     public static boolean getConfigSettings(String setting) {
-        return COMMON_CONFIG.getOrElse("Settings." + setting, true);
+        return LOADED_SETTINGS.get(setting);
     }
 
-    public static int getConfigWeight(String registryName) {
-        return COMMON_CONFIG.getOrElse("Weight." + registryName, 0);
+    public static List<Integer> getConfigThresholds() {
+        return LOADED_THRESHOLDS;
     }
 
-    public static Map<String, Integer> getWeightMap() {
-        CommentedConfig config = COMMON_CONFIG.get("Weight");
-        Map<String, Integer> weightMap = new HashMap<>();
-        for (Map.Entry<String, Object> entry : config.valueMap().entrySet()) {
-            weightMap.put(entry.getKey(), (int) entry.getValue());
-        }
-        return weightMap;
+    public static float getConfigWeight(String registryName) {
+        return LOADED_WEIGHT_MAPPING.getOrDefault(registryName, 0f);
+    }
+
+    public static Map<String, Float> getConfigWeightMapping() {
+        return LOADED_WEIGHT_MAPPING;
     }
 }

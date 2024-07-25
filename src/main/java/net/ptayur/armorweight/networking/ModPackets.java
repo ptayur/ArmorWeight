@@ -7,7 +7,8 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.ptayur.armorweight.ArmorWeight;
-import net.ptayur.armorweight.networking.packet.WeightMapS2CPacket;
+import net.ptayur.armorweight.networking.packet.ThresholdsS2CPacket;
+import net.ptayur.armorweight.networking.packet.WeightMappingS2CPacket;
 import net.ptayur.armorweight.networking.packet.PlayerWeightS2CPacket;
 
 public class ModPackets {
@@ -34,10 +35,16 @@ public class ModPackets {
                 .consumerMainThread(PlayerWeightS2CPacket::handle)
                 .add();
 
-        net.messageBuilder(WeightMapS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(WeightMapS2CPacket::new)
-                .encoder(WeightMapS2CPacket::toBytes)
-                .consumerMainThread(WeightMapS2CPacket::handle)
+        net.messageBuilder(WeightMappingS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(WeightMappingS2CPacket::new)
+                .encoder(WeightMappingS2CPacket::toBytes)
+                .consumerMainThread(WeightMappingS2CPacket::handle)
+                .add();
+
+        net.messageBuilder(ThresholdsS2CPacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
+                .decoder(ThresholdsS2CPacket::new)
+                .encoder(ThresholdsS2CPacket::toBytes)
+                .consumerMainThread(ThresholdsS2CPacket::handle)
                 .add();
     }
 
