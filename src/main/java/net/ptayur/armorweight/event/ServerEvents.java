@@ -12,12 +12,11 @@ import net.ptayur.armorweight.networking.ModPackets;
 import net.ptayur.armorweight.networking.packet.ThresholdsS2CPacket;
 import net.ptayur.armorweight.networking.packet.WeightMappingS2CPacket;
 import net.ptayur.armorweight.networking.packet.PlayerWeightS2CPacket;
+import net.ptayur.armorweight.util.EffectUtils;
+import net.ptayur.armorweight.util.WeightUtils;
 
 import java.util.List;
 import java.util.Map;
-
-import static net.ptayur.armorweight.util.EffectUtils.applyEffect;
-import static net.ptayur.armorweight.util.WeightUtils.getTotalEntityWeight;
 
 public class ServerEvents {
     @Mod.EventBusSubscriber(modid = ArmorWeight.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -30,14 +29,14 @@ public class ServerEvents {
             LivingEntity entity = event.getEntity();
             if (entity instanceof ServerPlayer player) {
                 if (player.gameMode.getGameModeForPlayer().isSurvival()) {
-                    float weight = getTotalEntityWeight(player);
-                    applyEffect(player, weight);
+                    float weight = WeightUtils.getTotalEntityWeight(player);
+                    EffectUtils.applyEffect(player, weight);
                     ModPackets.sendToClient(new PlayerWeightS2CPacket(weight), player);
                 }
             } else {
                 if (ModCommonConfig.getConfigSettings("isMobsAffected")) {
-                    float weight = getTotalEntityWeight(entity);
-                    applyEffect(entity, weight);
+                    float weight = WeightUtils.getTotalEntityWeight(entity);
+                    EffectUtils.applyEffect(entity, weight);
                 }
             }
         }
@@ -47,9 +46,9 @@ public class ServerEvents {
             ServerPlayer player = (ServerPlayer) event.getEntity();
             float weight = 0;
             if (event.getNewGameMode().isSurvival()) {
-                weight = getTotalEntityWeight(player);
+                weight = WeightUtils.getTotalEntityWeight(player);
             }
-            applyEffect(player, weight);
+            EffectUtils.applyEffect(player, weight);
             ModPackets.sendToClient(new PlayerWeightS2CPacket(weight), player);
         }
 

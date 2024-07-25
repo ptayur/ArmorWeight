@@ -1,12 +1,10 @@
 package net.ptayur.armorweight.config;
 
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
+import net.ptayur.armorweight.util.ConfigUtils;
 
 import java.nio.file.Paths;
 import java.util.*;
-
-import static net.ptayur.armorweight.util.ConfigUtils.*;
-
 
 public class ModCommonConfig {
     private static final CommentedFileConfig COMMON_CONFIG = CommentedFileConfig
@@ -39,9 +37,9 @@ public class ModCommonConfig {
 
                 The values must be in the range [0, 19] and be greater than the previous threshold value.\
                 
-                Lightness I threshold.""");
-        put("Level2EffectThreshold", "Lightness II threshold.");
-        put("Level3EffectThreshold", "Lightness III threshold.");
+                Encumbrance I threshold.""");
+        put("Level2EffectThreshold", "Encumbrance II threshold.");
+        put("Level3EffectThreshold", "Encumbrance III threshold.");
     }};
 
     private static final Map<String, Number> WEIGHT = new LinkedHashMap<>() {{
@@ -103,16 +101,16 @@ public class ModCommonConfig {
     public static void initConfig() {
         COMMON_CONFIG.load();
         if (COMMON_CONFIG.isEmpty()) {
-            createCommentedConfig(COMMON_CONFIG, SECTIONS_MAPPING);
+            ConfigUtils.createCommentedConfig(COMMON_CONFIG, SECTIONS_MAPPING);
         } else {
-            checkMissingEntries(COMMON_CONFIG, SECTIONS_MAPPING);
-            checkSettingsValues(COMMON_CONFIG, SETTINGS);
-            checkThresholdsValues(COMMON_CONFIG, THRESHOLDS);
-            checkWeightValues(COMMON_CONFIG, WEIGHT);
+            ConfigUtils.checkMissingEntries(COMMON_CONFIG, SECTIONS_MAPPING);
+            ConfigUtils.checkSettingsValues(COMMON_CONFIG, SETTINGS);
+            ConfigUtils.checkThresholdsValues(COMMON_CONFIG, THRESHOLDS);
+            ConfigUtils.checkWeightValues(COMMON_CONFIG, WEIGHT);
         }
-        loadSettingsSection(COMMON_CONFIG, LOADED_SETTINGS);
-        loadThresholdsSection(COMMON_CONFIG, LOADED_THRESHOLDS);
-        loadWeightSection(COMMON_CONFIG, LOADED_WEIGHT_MAPPING);
+        ConfigUtils.loadSettingsSection(COMMON_CONFIG, LOADED_SETTINGS);
+        ConfigUtils.loadThresholdsSection(COMMON_CONFIG, LOADED_THRESHOLDS);
+        ConfigUtils.loadWeightSection(COMMON_CONFIG, LOADED_WEIGHT_MAPPING);
     }
 
     public static boolean getConfigSettings(String setting) {

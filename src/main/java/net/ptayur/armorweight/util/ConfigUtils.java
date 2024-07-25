@@ -12,7 +12,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.*;
 
 import static net.ptayur.armorweight.ArmorWeight.LOGGER;
-import static net.ptayur.armorweight.util.EquipmentUtils.isWearable;
 
 public class ConfigUtils {
     private static void setConfigEntries(CommentedFileConfig config, String path, Map<String, ?> map) {
@@ -158,7 +157,7 @@ public class ConfigUtils {
                         entryKey);
                 continue;
             }
-            if (!isWearable(new ItemStack(item))) {
+            if (!EquipmentUtils.isWearable(new ItemStack(item))) {
                 keysToRemove.add(entryKey);
                 LOGGER.warn("The entry \"{}\" in section [Weight] can't be worn. Entry deleted",
                         entryKey);
