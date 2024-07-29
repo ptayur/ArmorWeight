@@ -3,8 +3,6 @@ package net.ptayur.armorweight.event;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
@@ -12,21 +10,19 @@ import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.ptayur.armorweight.ArmorWeight;
-import net.ptayur.armorweight.client.ClientWeightData;
 import net.ptayur.armorweight.client.WeightHudOverlay;
+import net.ptayur.armorweight.util.EquipmentUtils;
+import net.ptayur.armorweight.util.WeightUtils;
 
 import java.util.List;
-import java.util.Map;
 
 public class ClientEvents {
     @Mod.EventBusSubscriber(modid = ArmorWeight.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
     public static class ClientModBusEvents {
         @SubscribeEvent
         public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
-            event.registerBelow(VanillaGuiOverlay.CHAT_PANEL.id(), "hud_weight", WeightHudOverlay.HUD_WEIGHT);
-            event.registerBelow(VanillaGuiOverlay.ARMOR_LEVEL.id(), "hud_empty_armor", WeightHudOverlay.HUD_EMPTY_ARMOR);
+            event.registerBelow(VanillaGuiOverlay.CHAT_PANEL.id(), "weight_level", WeightHudOverlay.HUD_WEIGHT);
         }
     }
 
@@ -38,17 +34,18 @@ public class ClientEvents {
                  return;
              }
              ItemStack itemStack = event.getItemStack();
-             ResourceLocation registryKey = ForgeRegistries.ITEMS.getKey(itemStack.getItem());
-             Map<String, Integer> weightMap = ClientWeightData.getWeightMap();
-             if (registryKey == null) {
+             if (!EquipmentUtils.isWearable(itemStack)) {
                  return;
              }
-             if (!weightMap.containsKey(registryKey.toString())) {
+             float plainWeight = WeightUtils.getItemWeight(itemStack, false);
+             if (plainWeight == 0) {
                  return;
              }
-             int weight = weightMap.get(registryKey.toString());
-             if (weight == 0) {
-                 return;
+             Number weight;
+             if ((int) plainWeight == plainWeight) {
+                 weight = (int) plainWeight;
+             } else {
+                 weight = plainWeight;
              }
              List<Component> tooltip = event.getToolTip();
              int insertIndex = tooltip.size();
@@ -70,23 +67,12 @@ public class ClientEvents {
                      }
                  }
                  tooltip.add(insertIndex, Component.literal(""));
-                 String slot = getEquipmentSlot(itemStack).getName().toLowerCase();
+                 String slot = EquipmentUtils.getEquipmentSlot(itemStack).getName().toLowerCase();
                  tooltip.add(insertIndex + 1, Component.translatable("item.modifiers." + slot)
                          .withStyle(ChatFormatting.GRAY));
                  tooltip.add(insertIndex + 2, Component.translatable("tooltip.armorweight.weight", weight)
                          .withStyle(ChatFormatting.BLUE));
              }
-         }
-
-         private static EquipmentSlot getEquipmentSlot(ItemStack itemStack) {
-             if (itemStack.canEquip(EquipmentSlot.HEAD, null)) {
-                 return EquipmentSlot.HEAD;
-             } else if (itemStack.canEquip(EquipmentSlot.CHEST, null)) {
-                 return EquipmentSlot.CHEST;
-             } else if (itemStack.canEquip(EquipmentSlot.LEGS, null)) {
-                 return EquipmentSlot.LEGS;
-             }
-             return EquipmentSlot.FEET;
          }
     }
 }
