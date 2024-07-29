@@ -19,12 +19,12 @@ public class OverlayUtils {
         }
     }
 
-    public static void renderEmptyArmor(GuiGraphics guiGraphics, ResourceLocation defaultIcons, int x, int y) {
+    public static void renderEmptyArmor(GuiGraphics guiGraphics, ResourceLocation emptyArmor, int x, int y) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.setShaderTexture(0, defaultIcons);
+        RenderSystem.setShaderTexture(0, emptyArmor);
         for (int i = 0; i < 10; i++) {
-            guiGraphics.blit(defaultIcons, x + i * 8, y, 16, 9, 9, 9);
+            guiGraphics.blit(emptyArmor, x + i * 8, y, 0, 0, 9, 9, 9, 9);
         }
     }
 }

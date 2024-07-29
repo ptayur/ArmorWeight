@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class WeightHudOverlay {
-    private static final ResourceLocation ARMORWEIGHT_ICONS = new ResourceLocation(ArmorWeight.MOD_ID, "textures/gui/icons.png");
-    private static final ResourceLocation DEFAULT_ICONS = new ResourceLocation("textures/gui/icons.png");
+    private static final ResourceLocation ARMORWEIGHT_ICONS = new ResourceLocation(ArmorWeight.MOD_ID, "textures/gui/sprites/hud/icons.png");
+    private static final ResourceLocation ARMOR_EMPTY = new ResourceLocation("textures/gui/sprites/hud/armor_empty.png");
 
     public static final IGuiOverlay HUD_WEIGHT = (((gui, guiGraphics, partialTick, screenWidth, screenHeight) -> {
         int clientWeight = (int) Math.ceil(ClientData.getPlayerWeight());
@@ -30,7 +30,7 @@ public class WeightHudOverlay {
                 thresholds.get(2)
         ));
         if (Objects.requireNonNull(gui.getMinecraft().player).getArmorValue() == 0) {
-            OverlayUtils.renderEmptyArmor(guiGraphics, DEFAULT_ICONS, x, y);
+            OverlayUtils.renderEmptyArmor(guiGraphics, ARMOR_EMPTY, x, y);
         }
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
