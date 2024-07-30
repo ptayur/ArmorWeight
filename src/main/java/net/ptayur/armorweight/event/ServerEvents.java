@@ -1,29 +1,21 @@
 package net.ptayur.armorweight.event;
 
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderGetter;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffect;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.ptayur.armorweight.ArmorWeight;
 import net.ptayur.armorweight.config.ModCommonConfig;
-import net.ptayur.armorweight.effect.ModEffects;
-import net.ptayur.armorweight.enchantment.ModEnchantments;
 import net.ptayur.armorweight.networking.ModPackets;
-import net.ptayur.armorweight.networking.packet.WeightMapS2CPacket;
+import net.ptayur.armorweight.networking.packet.ThresholdsS2CPacket;
+import net.ptayur.armorweight.networking.packet.WeightMappingS2CPacket;
 import net.ptayur.armorweight.networking.packet.PlayerWeightS2CPacket;
+import net.ptayur.armorweight.util.EffectUtils;
+import net.ptayur.armorweight.util.WeightUtils;
 
+import java.util.List;
 import java.util.Map;
 
 public class ServerEvents {
@@ -37,14 +29,14 @@ public class ServerEvents {
             LivingEntity entity = event.getEntity();
             if (entity instanceof ServerPlayer player) {
                 if (player.gameMode.getGameModeForPlayer().isSurvival()) {
-                    int weight = calculateWeight(player);
-                    applyEffect(player, weight);
+                    float weight = WeightUtils.getTotalEntityWeight(player);
+                    EffectUtils.applyEffect(player, weight);
                     ModPackets.sendToClient(new PlayerWeightS2CPacket(weight), player);
                 }
             } else {
                 if (ModCommonConfig.getConfigSettings("isMobsAffected")) {
-                    int weight = calculateWeight(entity);
-                    applyEffect(entity, weight);
+                    float weight = WeightUtils.getTotalEntityWeight(entity);
+                    EffectUtils.applyEffect(entity, weight);
                 }
             }
         }
@@ -52,52 +44,22 @@ public class ServerEvents {
         @SubscribeEvent
         public static void onGameModeChange(PlayerEvent.PlayerChangeGameModeEvent event) {
             ServerPlayer player = (ServerPlayer) event.getEntity();
-            int weight = 0;
+            float weight = 0;
             if (event.getNewGameMode().isSurvival()) {
-                weight = calculateWeight(player);
+                weight = WeightUtils.getTotalEntityWeight(player);
             }
-            applyEffect(player, weight);
+            EffectUtils.applyEffect(player, weight);
             ModPackets.sendToClient(new PlayerWeightS2CPacket(weight), player);
         }
 
         @SubscribeEvent
         public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
             ServerPlayer player = (ServerPlayer) event.getEntity();
-            Map<String, Integer> weightMap = ModCommonConfig.getWeightMap();
-            ModPackets.sendToClient(new WeightMapS2CPacket(weightMap), player);
+            Map<String, Float> weightMapping = ModCommonConfig.getConfigWeightMapping();
+            List<Integer> thresholds = ModCommonConfig.getConfigThresholds();
+            ModPackets.sendToClient(new WeightMappingS2CPacket(weightMapping), player);
             ModPackets.sendToClient(new PlayerWeightS2CPacket(0), player);
-        }
-
-        private static int calculateWeight(LivingEntity entity) {
-            float weight = 0;
-            for (ItemStack itemStack : entity.getArmorSlots()) {
-                Item item = itemStack.getItem();
-                ResourceLocation registryKey = ForgeRegistries.ITEMS.getKey(item);
-                if (registryKey != null) {
-                    String registryName = registryKey.toString();
-                    int armorItemWeight = ModCommonConfig.getConfigWeight(registryName);
-                    int lightnessLevel = EnchantmentHelper.getEnchantmentLevel(ModEnchantments.LIGHTNESS.get(), entity);
-                    weight += (float) (armorItemWeight * (1 - 0.15 * lightnessLevel));
-                }
-            }
-            return Math.min(Math.round(weight), 20);
-        }
-
-        private static void applyEffect(LivingEntity entity, int weight) {
-            if (ModEffects.ENCUMBRANCE.getKey() == null) {
-                return;
-            }
-            Holder<MobEffect> encumbranceHolder = entity.registryAccess().registryOrThrow(Registries.MOB_EFFECT).getHolderOrThrow(ModEffects.ENCUMBRANCE.getKey());
-            entity.removeEffect(encumbranceHolder);
-            if (weight > 18) {
-                entity.addEffect(new MobEffectInstance(encumbranceHolder, -1, 2, false, false, true));
-            } else if (weight > 14) {
-                entity.addEffect(new MobEffectInstance(encumbranceHolder, -1, 1, false, false, true));
-            } else if (weight > 8) {
-                entity.addEffect(new MobEffectInstance(encumbranceHolder, -1, 0, false, false, true));
-            } else {
-                entity.removeEffect(encumbranceHolder);
-            }
+            ModPackets.sendToClient(new ThresholdsS2CPacket(thresholds), player);
         }
     }
 }
