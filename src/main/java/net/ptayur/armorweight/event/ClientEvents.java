@@ -22,57 +22,57 @@ public class ClientEvents {
     public static class ClientModBusEvents {
         @SubscribeEvent
         public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
-            event.registerBelow(VanillaGuiOverlay.CHAT_PANEL.id(), "weight_level", WeightHudOverlay.HUD_WEIGHT);
+            event.registerAbove(VanillaGuiOverlay.ARMOR_LEVEL.id(), "weight_level", WeightHudOverlay.HUD_WEIGHT);
         }
     }
 
     @Mod.EventBusSubscriber(modid = ArmorWeight.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class ClientForgeBusEvents {
-         @SubscribeEvent
-         public static void onItemTooltip(ItemTooltipEvent event) {
-             if (event.getEntity() == null) {
-                 return;
-             }
-             ItemStack itemStack = event.getItemStack();
-             if (!EquipmentUtils.isWearable(itemStack)) {
-                 return;
-             }
-             float plainWeight = WeightUtils.getItemWeight(itemStack, false);
-             if (plainWeight == 0) {
-                 return;
-             }
-             Number weight;
-             if ((int) plainWeight == plainWeight) {
-                 weight = (int) plainWeight;
-             } else {
-                 weight = plainWeight;
-             }
-             List<Component> tooltip = event.getToolTip();
-             int insertIndex = tooltip.size();
-             boolean itemModifiers = false;
-             for (Component entry : tooltip) {
-                 if (entry.getStyle().getColor() == TextColor.fromLegacyFormat(ChatFormatting.BLUE)) {
-                     insertIndex = tooltip.indexOf(entry) + 1;
-                     itemModifiers = true;
-                 }
-             }
-             if (itemModifiers) {
-                 tooltip.add(insertIndex, Component.translatable("tooltip.armorweight.weight", weight)
-                         .withStyle(ChatFormatting.BLUE));
-             } else {
-                 for (Component entry : tooltip) {
-                     if (entry.getStyle().getColor() == TextColor.fromLegacyFormat(ChatFormatting.DARK_GRAY)) {
-                         insertIndex = tooltip.indexOf(entry);
-                         break;
-                     }
-                 }
-                 tooltip.add(insertIndex, Component.literal(""));
-                 String slot = EquipmentUtils.getEquipmentSlot(itemStack).getName().toLowerCase();
-                 tooltip.add(insertIndex + 1, Component.translatable("item.modifiers." + slot)
+        @SubscribeEvent
+        public static void onItemTooltip(ItemTooltipEvent event) {
+            if (event.getEntity() == null) {
+                return;
+            }
+            ItemStack itemStack = event.getItemStack();
+            if (!EquipmentUtils.isWearable(itemStack)) {
+                return;
+            }
+            float plainWeight = WeightUtils.getItemWeight(itemStack, false);
+            if (plainWeight == 0) {
+                return;
+            }
+            Number weight;
+            if ((int) plainWeight == plainWeight) {
+                weight = (int) plainWeight;
+            } else {
+                weight = plainWeight;
+            }
+            List<Component> tooltip = event.getToolTip();
+            int insertIndex = tooltip.size();
+            boolean itemModifiers = false;
+            for (Component entry : tooltip) {
+                if (entry.getStyle().getColor() == TextColor.fromLegacyFormat(ChatFormatting.BLUE)) {
+                    insertIndex = tooltip.indexOf(entry) + 1;
+                    itemModifiers = true;
+                }
+            }
+            if (itemModifiers) {
+                tooltip.add(insertIndex, Component.translatable("tooltip.armorweight.weight", weight)
+                        .withStyle(ChatFormatting.BLUE));
+            } else {
+                for (Component entry : tooltip) {
+                    if (entry.getStyle().getColor() == TextColor.fromLegacyFormat(ChatFormatting.DARK_GRAY)) {
+                        insertIndex = tooltip.indexOf(entry);
+                        break;
+                    }
+                }
+                tooltip.add(insertIndex, Component.literal(""));
+                String slot = EquipmentUtils.getEquipmentSlot(itemStack).getName().toLowerCase();
+                tooltip.add(insertIndex + 1, Component.translatable("item.modifiers." + slot)
                          .withStyle(ChatFormatting.GRAY));
-                 tooltip.add(insertIndex + 2, Component.translatable("tooltip.armorweight.weight", weight)
-                         .withStyle(ChatFormatting.BLUE));
-             }
-         }
+                tooltip.add(insertIndex + 2, Component.translatable("tooltip.armorweight.weight", weight)
+                        .withStyle(ChatFormatting.BLUE));
+            }
+        }
     }
 }
