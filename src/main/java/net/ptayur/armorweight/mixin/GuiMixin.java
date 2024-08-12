@@ -40,8 +40,9 @@ public abstract class GuiMixin {
                 thresholds.get(1),
                 thresholds.get(2)
         ));
+        int shiftedY = y - (heartRows - 1) * height - 10;
         if (Objects.requireNonNull(Minecraft.getInstance().player).getArmorValue() == 0) {
-            OverlayUtils.renderEmptyArmor(guiGraphics, ARMOR_EMPTY, x, y - 10);
+            OverlayUtils.renderEmptyArmor(guiGraphics, ARMOR_EMPTY, x, shiftedY);
         }
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -51,9 +52,9 @@ public abstract class GuiMixin {
             int thresholdStart = startIndices.get(i) / 2;
             boolean isOddStart = startIndices.get(i) % 2 != 0;
             if (clientWeight > threshold) {
-                OverlayUtils.renderWeight(guiGraphics, ARMORWEIGHT_ICONS, x, y - 10, i, thresholdStart, threshold, isOddStart, threshold % 2 != 0);
+                OverlayUtils.renderWeight(guiGraphics, ARMORWEIGHT_ICONS, x, shiftedY, i, thresholdStart, threshold, isOddStart, threshold % 2 != 0);
             } else {
-                OverlayUtils.renderWeight(guiGraphics, ARMORWEIGHT_ICONS, x, y - 10, i, thresholdStart, clientWeight, isOddStart, clientWeight % 2 != 0);
+                OverlayUtils.renderWeight(guiGraphics, ARMORWEIGHT_ICONS, x, shiftedY, i, thresholdStart, clientWeight, isOddStart, clientWeight % 2 != 0);
                 break;
             }
         }
