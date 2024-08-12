@@ -22,7 +22,7 @@ public class ClientEvents {
     public static class ClientModBusEvents {
         @SubscribeEvent
         public static void registerGuiOverlays(RegisterGuiOverlaysEvent event) {
-            event.registerBelow(VanillaGuiOverlay.CHAT_PANEL.id(), "weight_level", WeightHudOverlay.HUD_WEIGHT);
+            event.registerAbove(VanillaGuiOverlay.ARMOR_LEVEL.id(), "weight_level", WeightHudOverlay.HUD_WEIGHT);
         }
     }
 
