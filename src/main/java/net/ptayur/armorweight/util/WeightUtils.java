@@ -21,7 +21,11 @@ public class WeightUtils {
             armorItemWeight = ModCommonConfig.getConfigWeight(registryKey.toString());
         } else {
             Map<String, Float> weightMapping = ClientData.getWeightMapping();
-            armorItemWeight = weightMapping.getOrDefault(registryKey.toString(), 0f);
+            if (weightMapping == null) {
+                return 0f;
+            } else {
+                armorItemWeight = weightMapping.getOrDefault(registryKey.toString(), 0f);
+            }
         }
         itemStack.getEnchantments();
         int lightnessLevel = itemStack.getEnchantments().getLevel(ModEnchantments.LIGHTNESS.get());
