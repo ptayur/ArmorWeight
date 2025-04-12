@@ -1,7 +1,7 @@
 <p align="center"><img src="https://i.imgur.com/jUN9Zpk.png" alt="Logo" width=100></p>
 <h1 align="center">ArmorWeight<br>
-  <a href="https://www.curseforge.com/minecraft/mc-mods/armorweight/files"><img src="https://cf.way2muchnoise.eu/versions/armorweight.svg" alt="Supported Versions"></a>
-  <a href="https://www.curseforge.com/minecraft/mc-mods/armorweight"><img src="https://cf.way2muchnoise.eu/armorweight.svg" alt="Curse Forge"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/armorweight/files"><img src="https://cf.way2muchnoise.eu/versions/1059665.svg" alt="Supported Versions"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/armorweight"><img src="https://cf.way2muchnoise.eu/full_1059665_downloads.svg" alt="Curse Forge"></a>
   <a href="https://modrinth.com/mod/armorweight"><img src="https://img.shields.io/modrinth/dt/lpgm7bN3?logo=modrinth&label=&labelColor=%2300AF5C&color=2D2D2D&logoColor=1C1C1C" alt="Modrinth"></a>
 </h1>
 <p>A simple mod to increase the difficulty of the game.</p>
