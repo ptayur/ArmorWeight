@@ -35,10 +35,10 @@ public class WeightUtils {
     }
 
     public static float getTotalEntityWeight(LivingEntity entity) {
-        double weight = 0;
+        float weight = 0;
         for (ItemStack itemStack : entity.getArmorSlots()) {
             weight += getItemWeight(itemStack, true);
         }
-        return (float) Math.min(weight, 20);
+        return Math.min(weight, 20);
     }
 }

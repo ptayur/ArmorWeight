@@ -9,7 +9,7 @@ import java.util.List;
 
 public class EffectUtils {
     public static void applyEffect(LivingEntity entity, float weight) {
-        List<Integer> thresholds = ModCommonConfig.getConfigThresholds();
+        List<Integer> thresholds = ModCommonConfig.getConfigEffectThresholds();
         entity.removeEffect(ModEffects.ENCUMBRANCE.get());
         if (weight > thresholds.get(2)) {
             entity.addEffect(new MobEffectInstance(ModEffects.ENCUMBRANCE.get(), -1, 2, false, false, true));

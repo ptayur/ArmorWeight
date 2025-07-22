@@ -27,7 +27,9 @@ public class ArmorWeight {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
-        event.enqueueWork(ModPackets::register);
-        ModCommonConfig.initConfig();
+        event.enqueueWork(() -> {
+            ModPackets.register();
+            ModCommonConfig.initConfig();
+        });
     }
 }

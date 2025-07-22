@@ -1,8 +1,8 @@
 package net.ptayur.armorweight.config;
 
+import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import net.ptayur.armorweight.util.ConfigUtils;
-
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -15,76 +15,49 @@ public class ModCommonConfig {
             .preserveInsertionOrder()
             .build();
 
-    private static final Map<String, Boolean> SETTINGS = new LinkedHashMap<>() {{
+    private static final Map<String, Boolean> GENERAL = new LinkedHashMap<>() {{
         put("isMobsAffected", true);
-        put("isDependsOnProtection", false);
     }};
 
-    private static final Map<String, String> SETTINGS_COMMENTS = new LinkedHashMap<>() {{
-        put("isMobsAffected", "Determines whether a weight will be applied to mobs.");
-        put("isDependsOnProtection", "Determines whether weight will depend on the protection value.");
+    private static final Map<String, String> GENERAL_COMMENTS = new LinkedHashMap<>() {{
+        put("isMobsAffected", "Determines whether weight effects should be applied to mobs.");
         }};
 
-    private static final Map<String, Integer> THRESHOLDS = new LinkedHashMap<>() {{
+    private static final Map<String, Number> EFFECT = new LinkedHashMap<>() {{
+        put("EffectSpeedModifier", 0.15D);
         put("Level1EffectThreshold", 8);
         put("Level2EffectThreshold", 14);
         put("Level3EffectThreshold", 18);
     }};
 
-    private static final Map<String, String> THRESHOLDS_COMMENTS = new LinkedHashMap<>() {{
+    private static final Map<String, String> EFFECT_COMMENTS = new LinkedHashMap<>() {{
+        put("EffectSpeedModifier", """
+                Multiplier for reducing movement speed per effect level. The value must be in range [0, 1]\
+                For example, 0.15 means a 15% speed reduction per level.""");
         put("Level1EffectThreshold", """
-                Determines from which weight level the corresponding effect will be applied.\
-
-                The values must be in the range [0, 19] and be greater than the previous threshold value.\
-                
-                Encumbrance I threshold.""");
+                Weight thresholds for applying each effect level.\
+                The values must be in the range [0, 19] and greater than the previous threshold.\
+                \nEncumbrance I threshold.""");
         put("Level2EffectThreshold", "Encumbrance II threshold.");
         put("Level3EffectThreshold", "Encumbrance III threshold.");
     }};
 
-    private static final Map<String, Number> WEIGHT = new LinkedHashMap<>() {{
-        put("minecraft:leather_helmet", 1f);
-        put("minecraft:leather_chestplate", 1f);
-        put("minecraft:leather_leggings", 1f);
-        put("minecraft:leather_boots", 1f);
-        put("minecraft:chainmail_helmet", 2f);
-        put("minecraft:chainmail_chestplate", 2f);
-        put("minecraft:chainmail_leggings", 2f);
-        put("minecraft:chainmail_boots", 2f);
-        put("minecraft:iron_helmet", 2f);
-        put("minecraft:iron_chestplate", 3f);
-        put("minecraft:iron_leggings", 2f);
-        put("minecraft:iron_boots", 2f);
-        put("minecraft:golden_helmet", 3f);
-        put("minecraft:golden_chestplate", 4f);
-        put("minecraft:golden_leggings", 4f);
-        put("minecraft:golden_boots", 3f);
-        put("minecraft:diamond_helmet", 4f);
-        put("minecraft:diamond_chestplate", 4f);
-        put("minecraft:diamond_leggings", 4f);
-        put("minecraft:diamond_boots", 4f);
-        put("minecraft:netherite_helmet", 5f);
-        put("minecraft:netherite_chestplate", 5f);
-        put("minecraft:netherite_leggings", 5f);
-        put("minecraft:netherite_boots", 5f);
-        put("minecraft:turtle_helmet", 3f);
-    }};
+    private static final Map<String, Float> WEIGHT = ConfigUtils.initWeightMap();
 
     private static final Map<String, String> WEIGHT_COMMENTS = new LinkedHashMap<>() {{
-        put("minecraft:leather_helmet", """
-                Determines the weight of armor elements. Values must be in the range [0, 20].\
-                
-                Example:"[mod_id]:[item_id]" = [value].""");
+        put("Weight", """
+                Determines the weight of armor items.\
+                Format example: "[mod_id]:[item_id]" = [weight].""");
     }};
 
     private static final Map<String, List<Map<String, ?>>> SECTIONS_MAPPING = new LinkedHashMap<>() {{
-        put("Settings", new ArrayList<>() {{
-            add(SETTINGS);
-            add(SETTINGS_COMMENTS);
+        put("General", new ArrayList<>() {{
+            add(GENERAL);
+            add(GENERAL_COMMENTS);
         }});
-        put("Thresholds", new ArrayList<>() {{
-            add(THRESHOLDS);
-            add(THRESHOLDS_COMMENTS);
+        put("Effect", new ArrayList<>() {{
+            add(EFFECT);
+            add(EFFECT_COMMENTS);
         }});
         put("Weight", new ArrayList<>() {{
             add(WEIGHT);
@@ -92,40 +65,107 @@ public class ModCommonConfig {
         }});
     }};
 
-    private static final Map<String, Boolean> LOADED_SETTINGS = new HashMap<>();
-
-    private static final List<Integer> LOADED_THRESHOLDS = new ArrayList<>();
-
-    private static final Map<String, Float> LOADED_WEIGHT_MAPPING = new HashMap<>();
-
     public static void initConfig() {
         COMMON_CONFIG.load();
         if (COMMON_CONFIG.isEmpty()) {
             ConfigUtils.createCommentedConfig(COMMON_CONFIG, SECTIONS_MAPPING);
         } else {
-            ConfigUtils.checkMissingEntries(COMMON_CONFIG, SECTIONS_MAPPING);
-            ConfigUtils.checkSettingsValues(COMMON_CONFIG, SETTINGS);
-            ConfigUtils.checkThresholdsValues(COMMON_CONFIG, THRESHOLDS);
-            ConfigUtils.checkWeightValues(COMMON_CONFIG, WEIGHT);
+            ConfigUtils.validateConfigSection(COMMON_CONFIG,
+                    "General",
+                    GENERAL,
+                    true,
+                    raw -> (raw instanceof Boolean b) ? Optional.of(b) : Optional.empty(),
+                    value -> true,
+                    GENERAL::get
+            );
+
+            // validate thresholds in Effect section
+
+            ConfigUtils.validateConfigSection(COMMON_CONFIG,
+                    "Effect",
+                    Map.of(
+                            "Level1EffectThreshold", 8,
+                            "Level2EffectThreshold", 14,
+                            "Level3EffectThreshold", 18
+                    ),
+                    true,
+                    raw -> (raw instanceof Integer i) ? Optional.of(i) : Optional.empty(),
+                    value -> value.intValue() >= 0 && value.intValue() <= 19,
+                    EFFECT::get
+            );
+
+            // validate modifier in Effect section
+
+            ConfigUtils.validateConfigSection(COMMON_CONFIG,
+                    "Effect",
+                    Map.of(
+                            "EffectSpeedModifier", 0.15D
+                    ),
+                    true,
+                    raw -> (raw instanceof Double d) ? Optional.of(d) : Optional.empty(),
+                    value -> value.doubleValue() >= 0 && value.doubleValue() <= 1,
+                    EFFECT::get
+            );
+            ConfigUtils.validateConfigSection(COMMON_CONFIG,
+                    "Weight",
+                    WEIGHT,
+                    false,
+                    raw -> (raw instanceof Float n) ? Optional.of(n) : Optional.empty(),
+                    value -> true,
+                    key -> WEIGHT.getOrDefault(key, 0f)
+            );
+            ConfigUtils.validateThresholdsOrder(COMMON_CONFIG, EFFECT);
         }
-        ConfigUtils.loadSettingsSection(COMMON_CONFIG, LOADED_SETTINGS);
-        ConfigUtils.loadThresholdsSection(COMMON_CONFIG, LOADED_THRESHOLDS);
-        ConfigUtils.loadWeightSection(COMMON_CONFIG, LOADED_WEIGHT_MAPPING);
     }
 
-    public static boolean getConfigSettings(String setting) {
-        return LOADED_SETTINGS.get(setting);
+    public static List<Map<String, ?>> getSectionsMapping(String section) {
+        return SECTIONS_MAPPING.get(section);
     }
 
-    public static List<Integer> getConfigThresholds() {
-        return LOADED_THRESHOLDS;
+    public static boolean getConfigGeneral(String setting) {
+        return COMMON_CONFIG.get("General." + setting);
+    }
+
+    public static List<Integer> getConfigEffectThresholds() {
+        return new ArrayList<>(){{
+            add(COMMON_CONFIG.get("Effect.Level1EffectThreshold"));
+            add(COMMON_CONFIG.get("Effect.Level2EffectThreshold"));
+            add(COMMON_CONFIG.get("Effect.Level3EffectThreshold"));
+            add(20);
+        }};
+    }
+
+    public static float getConfigEffectModifier() {
+        CommentedConfig effectSection = COMMON_CONFIG.get("Effect");
+        Object value = effectSection.get("EffectSpeedModifier");
+        if (value instanceof Number number) {
+            return number.floatValue();
+        } else {
+            return 0.15f;
+        }
     }
 
     public static float getConfigWeight(String registryName) {
-        return LOADED_WEIGHT_MAPPING.getOrDefault(registryName, 0f);
+        CommentedConfig weightSection = COMMON_CONFIG.get("Weight");
+        Object value = weightSection.get(registryName);
+        if (value instanceof Number number) {
+            return number.floatValue();
+        } else {
+            return 0f;
+        }
     }
 
-    public static Map<String, Float> getConfigWeightMapping() {
-        return LOADED_WEIGHT_MAPPING;
+    public static Map<String, Float> getConfigWeightMap() {
+        Map<String, Float> weightMap = new HashMap<>();
+        CommentedConfig weightSection = COMMON_CONFIG.get("Weight");
+        if (weightSection != null) {
+            for (String key : weightSection.valueMap().keySet()) {
+                Object value = weightSection.get(key);
+                if (value instanceof Number number) {
+                    weightMap.put(key, number.floatValue());
+                }
+            }
+        }
+        return weightMap;
     }
 }

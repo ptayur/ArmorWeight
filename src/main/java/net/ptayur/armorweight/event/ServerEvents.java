@@ -34,7 +34,7 @@ public class ServerEvents {
                     ModPackets.sendToClient(new PlayerWeightS2CPacket(weight), player);
                 }
             } else {
-                if (ModCommonConfig.getConfigSettings("isMobsAffected")) {
+                if (ModCommonConfig.getConfigGeneral("isMobsAffected")) {
                     float weight = WeightUtils.getTotalEntityWeight(entity);
                     EffectUtils.applyEffect(entity, weight);
                 }
@@ -55,8 +55,8 @@ public class ServerEvents {
         @SubscribeEvent
         public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
             ServerPlayer player = (ServerPlayer) event.getEntity();
-            Map<String, Float> weightMapping = ModCommonConfig.getConfigWeightMapping();
-            List<Integer> thresholds = ModCommonConfig.getConfigThresholds();
+            Map<String, Float> weightMapping = ModCommonConfig.getConfigWeightMap();
+            List<Integer> thresholds = ModCommonConfig.getConfigEffectThresholds();
             ModPackets.sendToClient(new WeightMappingS2CPacket(weightMapping), player);
             ModPackets.sendToClient(new PlayerWeightS2CPacket(0), player);
             ModPackets.sendToClient(new ThresholdsS2CPacket(thresholds), player);
