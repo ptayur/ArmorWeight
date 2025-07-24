@@ -32,12 +32,12 @@ public class ModCommonConfig {
 
     private static final Map<String, String> EFFECT_COMMENTS = new LinkedHashMap<>() {{
         put("EffectSpeedModifier", """
-                Multiplier for reducing movement speed per effect level. The value must be in range [0, 1]\
+                Multiplier for reducing movement speed per effect level. The value must be in range [0, 1].
                 For example, 0.15 means a 15% speed reduction per level.""");
         put("Level1EffectThreshold", """
-                Weight thresholds for applying each effect level.\
-                The values must be in the range [0, 19] and greater than the previous threshold.\
-                \nEncumbrance I threshold.""");
+                Weight thresholds for applying each effect level.
+                The values must be in the range [0, 19] and greater than the previous threshold.
+                Encumbrance I threshold.""");
         put("Level2EffectThreshold", "Encumbrance II threshold.");
         put("Level3EffectThreshold", "Encumbrance III threshold.");
     }};
@@ -46,7 +46,7 @@ public class ModCommonConfig {
 
     private static final Map<String, String> WEIGHT_COMMENTS = new LinkedHashMap<>() {{
         put("Weight", """
-                Determines the weight of armor items.\
+                Determines the weight of armor items.
                 Format example: "[mod_id]:[item_id]" = [weight].""");
     }};
 
@@ -110,11 +110,11 @@ public class ModCommonConfig {
                     "Weight",
                     WEIGHT,
                     false,
-                    raw -> (raw instanceof Float n) ? Optional.of(n) : Optional.empty(),
+                    raw -> (raw instanceof Number n) ? Optional.of(n.floatValue()) : Optional.empty(),
                     value -> true,
                     key -> WEIGHT.getOrDefault(key, 0f)
             );
-            ConfigUtils.validateThresholdsOrder(COMMON_CONFIG, EFFECT);
+            ConfigUtils.validateThresholdsOrder(COMMON_CONFIG);
         }
     }
 

@@ -57,7 +57,7 @@ public class ClientEvents {
                 }
             }
             if (itemModifiers) {
-                tooltip.add(insertIndex, Component.translatable("tooltip.armorweight.weight", weight)
+                tooltip.add(insertIndex, Component.translatable("tooltip.armorweight.weight", (weight.floatValue() > 0 ? "+" : "") + weight)
                         .withStyle(ChatFormatting.BLUE));
             } else {
                 for (Component entry : tooltip) {
@@ -70,7 +70,7 @@ public class ClientEvents {
                 String slot = EquipmentUtils.getEquipmentSlot(itemStack).getName().toLowerCase();
                 tooltip.add(insertIndex + 1, Component.translatable("item.modifiers." + slot)
                          .withStyle(ChatFormatting.GRAY));
-                tooltip.add(insertIndex + 2, Component.translatable("tooltip.armorweight.weight", weight)
+                tooltip.add(insertIndex + 2, Component.translatable("tooltip.armorweight.weight", (weight.floatValue() > 0 ? "+" : "") + weight)
                         .withStyle(ChatFormatting.BLUE));
             }
         }

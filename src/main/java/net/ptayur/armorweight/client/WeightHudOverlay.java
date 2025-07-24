@@ -27,7 +27,7 @@ public class WeightHudOverlay {
 
     public static final IGuiOverlay HUD_WEIGHT = (((gui, guiGraphics, partialTick, screenWidth, screenHeight) -> {
         int clientWeight = (int) Math.ceil(ClientData.getPlayerWeight());
-        if (clientWeight == 0) {
+        if (clientWeight <= 0) {
             return;
         }
         Player player = gui.getMinecraft().player;

@@ -96,7 +96,7 @@ public class ConfigUtils {
             if (section.contains(key)) {
                 value = section.get(key);
             } else {
-                LOGGER.warn("Entry \"{}.{}\" is missing. Restored from default values.", sectionName, key);
+                LOGGER.warn("Entry \"{}.{}\" is missing. Restored to default.", sectionName, key);
             }
             rebuild.put(key, value);
         }
@@ -120,18 +120,21 @@ public class ConfigUtils {
         config.set(sectionName, section);
     }
 
-    public static void validateThresholdsOrder(CommentedFileConfig config, Map<String, Number> defaultValues) {
+    public static void validateThresholdsOrder(CommentedFileConfig config) {
         List<String> keysToValidate = List.of("Level1EffectThreshold", "Level2EffectThreshold", "Level3EffectThreshold");
         CommentedConfig effectSection = config.get("Effect");
-        Integer previousValue = null;
+        List<Number> entries = new ArrayList<>();
         for (String key : keysToValidate) {
-            Integer currentValue = effectSection.get(key);
-            if (previousValue != null && currentValue < previousValue) {
-                effectSection.set(key, defaultValues.get(key));
-                LOGGER.warn("Entry \"Effect.{}\" is invalid. The value shouldn't be smaller than previous. Restored from default values.", key);
-            }
-            previousValue = currentValue;
+            entries.add(effectSection.get(key));
         }
-        config.set("Effect", effectSection);
+        List<Number> sortedEntries = entries.stream().sorted(Comparator.comparingInt(Number::intValue)).toList();
+        if (!entries.equals(sortedEntries)) {
+            for (int i = 0; i < sortedEntries.size(); i++) {
+                effectSection.set(keysToValidate.get(i), sortedEntries.get(i));
+            }
+            config.set("Effect", effectSection);
+            LOGGER.warn("Effect thresholds were not in strictly increasing order ({}); " +
+                    "they have been reordered to ascending values ({}).", entries, sortedEntries);
+        }
     }
 }

@@ -1,5 +1,5 @@
 {
   "effect.armorweight.encumbrance": "Обтяження",
   "enchantment.armorweight.lightness": "Легкість",
-  "tooltip.armorweight.weight": "+%s ваги"
+  "tooltip.armorweight.weight": "%s ваги"
 }

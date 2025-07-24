@@ -1,5 +1,5 @@
 {
   "effect.armorweight.encumbrance": "Encumbrance",
   "enchantment.armorweight.lightness": "Lightness",
-  "tooltip.armorweight.weight": "+%s Weight"
+  "tooltip.armorweight.weight": "%s Weight"
 }
