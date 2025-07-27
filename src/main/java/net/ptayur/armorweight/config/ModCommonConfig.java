@@ -68,58 +68,12 @@ public class ModCommonConfig {
     public static void initConfig() {
         COMMON_CONFIG.load();
         if (COMMON_CONFIG.isEmpty()) {
-            ConfigUtils.createCommentedConfig(COMMON_CONFIG, SECTIONS_MAPPING);
+            ConfigUtils.setDefaultSections(COMMON_CONFIG, SECTIONS_MAPPING);
         } else {
-            ConfigUtils.validateConfigSection(COMMON_CONFIG,
-                    "General",
-                    GENERAL,
-                    true,
-                    raw -> (raw instanceof Boolean b) ? Optional.of(b) : Optional.empty(),
-                    value -> true,
-                    GENERAL::get
-            );
-
-            // validate thresholds in Effect section
-
-            ConfigUtils.validateConfigSection(COMMON_CONFIG,
-                    "Effect",
-                    Map.of(
-                            "Level1EffectThreshold", 8,
-                            "Level2EffectThreshold", 14,
-                            "Level3EffectThreshold", 18
-                    ),
-                    true,
-                    raw -> (raw instanceof Integer i) ? Optional.of(i) : Optional.empty(),
-                    value -> value.intValue() >= 0 && value.intValue() <= 19,
-                    EFFECT::get
-            );
-
-            // validate modifier in Effect section
-
-            ConfigUtils.validateConfigSection(COMMON_CONFIG,
-                    "Effect",
-                    Map.of(
-                            "EffectSpeedModifier", 0.15D
-                    ),
-                    true,
-                    raw -> (raw instanceof Double d) ? Optional.of(d) : Optional.empty(),
-                    value -> value.doubleValue() >= 0 && value.doubleValue() <= 1,
-                    EFFECT::get
-            );
-            ConfigUtils.validateConfigSection(COMMON_CONFIG,
-                    "Weight",
-                    WEIGHT,
-                    false,
-                    raw -> (raw instanceof Number n) ? Optional.of(n.floatValue()) : Optional.empty(),
-                    value -> true,
-                    key -> WEIGHT.getOrDefault(key, 0f)
-            );
-            ConfigUtils.validateThresholdsOrder(COMMON_CONFIG);
+            ConfigUtils.validateGeneralSection(COMMON_CONFIG, SECTIONS_MAPPING);
+            ConfigUtils.validateEffectSection(COMMON_CONFIG, SECTIONS_MAPPING);
+            ConfigUtils.validateWeightSection(COMMON_CONFIG, SECTIONS_MAPPING);
         }
-    }
-
-    public static List<Map<String, ?>> getSectionsMapping(String section) {
-        return SECTIONS_MAPPING.get(section);
     }
 
     public static boolean getConfigGeneral(String setting) {

@@ -6,15 +6,25 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.ptayur.armorweight.config.ModCommonConfig;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 import static net.ptayur.armorweight.ArmorWeight.LOGGER;
 
 public class ConfigUtils {
+    public static Map<String, Float> initWeightMap() {
+        Map<String, Float> weightMap = new LinkedHashMap<>();
+        for (Item item : ForgeRegistries.ITEMS) {
+            if (item instanceof ArmorItem armorItem) {
+                ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
+                if (id != null) {
+                    weightMap.put(id.toString(), (float) armorItem.getDefense());
+                }
+            }
+        }
+        return weightMap;
+    }
+
     private static void setConfigEntries(CommentedFileConfig config, String path, Map<String, ?> map) {
         if (map == null) {
             return;
@@ -37,104 +47,159 @@ public class ConfigUtils {
         }
     }
 
-    public static Map<String, Float> initWeightMap() {
-        Map<String, Float> weightMap = new LinkedHashMap<>();
-        for (Item item : ForgeRegistries.ITEMS) {
-            if (item instanceof ArmorItem armorItem) {
-                ResourceLocation id = ForgeRegistries.ITEMS.getKey(item);
-                if (id != null) {
-                    weightMap.put(id.toString(), (float) armorItem.getDefense());
-                }
-            }
-        }
-        return weightMap;
-    }
-
-    public static void setSectionData(CommentedFileConfig config, String sectionName, List<Map<String, ?>> sectionData) {
-        setConfigComments(config, sectionName, sectionData.get(1));
-        setConfigEntries(config, sectionName, sectionData.get(0));
-    }
-
-    public static void createCommentedConfig(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
+    public static void setDefaultSections(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
         for (Map.Entry<String, List<Map<String, ?>>> section : sectionsMapping.entrySet()) {
-            setSectionData(config, section.getKey(), section.getValue());
+            setConfigComments(config, section.getKey(), section.getValue().get(1));
+            setConfigEntries(config, section.getKey(), section.getValue().get(0));
         }
     }
 
-    /**
-     * @param config The config file to be validated
-     * @param sectionName The name of the section
-     * @param defaultValues The default values of the section
-     * @param validateOnlyDefaultValues If true, only entries that appear in defaultValues map
-     *                                  will be validated
-     * @param parser A function that verifies types
-     * @param validator A predicate that tests a valid T
-     * @param onInvalid Callback for when parser fails or validator rejects
-     * @param <T> Type parameter
-     */
-    public static <T> void validateConfigSection(CommentedFileConfig config,
-                                          String sectionName,
-                                          Map<String, T> defaultValues,
-                                          boolean validateOnlyDefaultValues,
-                                          Function<Object, Optional<T>> parser,
-                                          Predicate<T> validator,
-                                          Function<String, T> onInvalid
-    ) {
-        CommentedConfig section = config.get(sectionName);
+    public static <T> Map<String, T> ensureDefaultPresent(CommentedConfig section, String sectionName, Map<String, T> defaultValues) {
         Map<String, T> rebuild = new LinkedHashMap<>();
-
-        // Iterate over default values to preserve their presence in the config
-
         if (section == null) {
-            List<Map<String, ?>> sectionData = ModCommonConfig.getSectionsMapping(sectionName);
-            setSectionData(config, sectionName, sectionData);
-            return;
+            rebuild = defaultValues;
+            LOGGER.warn("Section \"{}\" is empty. Restored to default.", sectionName);
+            return rebuild;
         }
+
+        // Iterate over default values to preserve their presence in the section
+
         for (Map.Entry<String, T> defaultEntry : defaultValues.entrySet()) {
             String key = defaultEntry.getKey();
             T value = defaultEntry.getValue();
             if (section.contains(key)) {
                 value = section.get(key);
             } else {
-                LOGGER.warn("Entry \"{}.{}\" is missing. Restored to default.", sectionName, key);
+                LOGGER.warn("Entry \"{}.{}\" is missing. Restored to default ({}).",
+                        sectionName,
+                        key,
+                        value);
             }
             rebuild.put(key, value);
         }
 
-        // Iterate over existing config file (or keys in defaultValues) and find invalid values
-
-        Map<String, Object> sectionMap = section.valueMap();
-        Set<String> keysToValidate = validateOnlyDefaultValues ? defaultValues.keySet() : sectionMap.keySet();
-        for (String key : keysToValidate) {
-            Object raw = sectionMap.get(key);
-            T value = parser.apply(raw).filter(validator).orElseGet(()-> {
-                LOGGER.warn("Entry \"{}.{}\" is invalid. Restored from default values.", sectionName, key);
-                return onInvalid.apply(key);
-            });
-            rebuild.put(key, value);
-        }
-
-        for (Map.Entry<String, T> validatedEntry : rebuild.entrySet()) {
-            section.set(validatedEntry.getKey(), validatedEntry.getValue());
-        }
-        config.set(sectionName, section);
+        return rebuild;
     }
 
-    public static void validateThresholdsOrder(CommentedFileConfig config) {
-        List<String> keysToValidate = List.of("Level1EffectThreshold", "Level2EffectThreshold", "Level3EffectThreshold");
+    public static void validateGeneralSection(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
+        CommentedConfig generalSection = config.get("General");
+        List<Map<String, ?>> GeneralMapping = sectionsMapping.get("General");
+        @SuppressWarnings("unchecked")
+        Map<String, Boolean> generalDefault = (Map<String, Boolean>) GeneralMapping.get(0);
+        @SuppressWarnings("unchecked")
+        Map<String, String> generalComments = (Map<String, String>) GeneralMapping.get(1);
+        Map<String, Boolean> rebuild = ensureDefaultPresent(generalSection, "General", generalDefault);
+
+        Object isMobsAffected = rebuild.get("isMobsAffected");
+        Boolean isMobsAffectedDefault = generalDefault.get("isMobsAffected");
+        if (!(isMobsAffected instanceof Boolean)) {
+            rebuild.put("isMobsAffected", isMobsAffectedDefault);
+            LOGGER.warn("Entry \"General.isMobsAffected\" has invalid type ({}): value is not a boolean. Restored to default ({}).",
+                    isMobsAffected,
+                    isMobsAffectedDefault);
+        }
+
+        // Rewrite section entries
+
+        generalSection.clear();
+        for (Map.Entry<String, Boolean> entry : rebuild.entrySet()) {
+            generalSection.set(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, String> commentEntry : generalComments.entrySet()) {
+            generalSection.setComment(commentEntry.getKey(), commentEntry.getValue());
+        }
+        config.set("General", generalSection);
+    }
+
+    public static void validateEffectSection(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
         CommentedConfig effectSection = config.get("Effect");
-        List<Number> entries = new ArrayList<>();
-        for (String key : keysToValidate) {
-            entries.add(effectSection.get(key));
-        }
-        List<Number> sortedEntries = entries.stream().sorted(Comparator.comparingInt(Number::intValue)).toList();
-        if (!entries.equals(sortedEntries)) {
-            for (int i = 0; i < sortedEntries.size(); i++) {
-                effectSection.set(keysToValidate.get(i), sortedEntries.get(i));
+        List<Map<String, ?>> EffectMapping = sectionsMapping.get("Effect");
+        @SuppressWarnings("unchecked")
+        Map<String, Number> effectDefault = (Map<String, Number>) EffectMapping.get(0);
+        @SuppressWarnings("unchecked")
+        Map<String, String> effectComments = (Map<String, String>) EffectMapping.get(1);
+        Map<String, Number> rebuild = ensureDefaultPresent(effectSection, "Effect", effectDefault);
+
+        // Validate EffectSpeedModifier
+
+        Object effectModifier = rebuild.get("EffectSpeedModifier");
+        Number modifierDefault = effectDefault.get("EffectSpeedModifier");
+        if (!(effectModifier instanceof Double modifierValue)) {
+            rebuild.put("EffectSpeedModifier", modifierDefault);
+            LOGGER.warn("Entry \"Effect.EffectSpeedModifier\" has invalid type ({}): value is not a double. Restored to default ({}).",
+                    effectModifier,
+                    modifierDefault);
+        } else {
+            if (modifierValue < 0 || modifierValue > 1) {
+                rebuild.put("EffectSpeedModifier", modifierDefault);
+                LOGGER.warn("Entry \"Effect.EffectSpeedModifier\" has invalid value ({}): it's outside the valid range [0.0, 1.0]." +
+                                " Restored to default ({}).",
+                        modifierValue,
+                        modifierDefault);
             }
-            config.set("Effect", effectSection);
-            LOGGER.warn("Effect thresholds were not in strictly increasing order ({}); " +
-                    "they have been reordered to ascending values ({}).", entries, sortedEntries);
         }
+
+        // Validate Thresholds
+
+        List<String> thresholds = List.of("Level1EffectThreshold", "Level2EffectThreshold", "Level3EffectThreshold");
+        for (String key : thresholds) {
+            Object thresholdValue = rebuild.get(key);
+            if (!(thresholdValue instanceof Integer)) {
+                Number thresholdDefault = effectDefault.get(key);
+                rebuild.put(key, thresholdDefault);
+                LOGGER.warn("Entry \"Effect.{}\" has invalid type ({}): value is not an integer. Restored to default ({})",
+                        key,
+                        thresholdValue,
+                        thresholdDefault);
+            }
+        }
+
+        boolean continueValidation = true;
+        while (continueValidation) {
+            continueValidation = false;
+            int previousValue = Integer.MIN_VALUE;
+            String previousKey = null;
+            for (String key : thresholds) {
+                int value = rebuild.get(key).intValue();
+                if (value <= previousValue) {
+                    int currentDefault = effectDefault.get(key).intValue();
+                    if (currentDefault > previousValue) {
+                        rebuild.put(key, currentDefault);
+                        LOGGER.warn("Entry \"Effect.{}\" has invalid value ({}): it falls below the previous threshold ({}). Restored to default ({}).",
+                                key,
+                                value,
+                                previousValue,
+                                currentDefault);
+                    } else {
+                        rebuild.put(previousKey, effectDefault.get(previousKey));
+                        LOGGER.warn("Entry \"Effect.{}\" has invalid value ({}): it exceeds the next threshold ({}). Restored to default ({}).",
+                                previousKey,
+                                previousValue,
+                                value,
+                                effectDefault.get(previousKey));
+                    }
+                    continueValidation = true;
+                    break;
+                }
+                previousValue = value;
+                previousKey = key;
+            }
+        }
+
+        // Rewrite section entries
+
+        effectSection.clear();
+        for (Map.Entry<String, Number> entry : rebuild.entrySet()) {
+            effectSection.set(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, String> commentEntry : effectComments.entrySet()) {
+            effectSection.setComment(commentEntry.getKey(), commentEntry.getValue());
+        }
+        config.set("Effect", effectSection);
+    }
+
+    public static void validateWeightSection(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
+        //TODO: write validateWeightSection function
+
     }
 }
