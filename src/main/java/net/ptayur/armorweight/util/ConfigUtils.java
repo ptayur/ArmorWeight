@@ -83,11 +83,11 @@ public class ConfigUtils {
 
     public static void validateGeneralSection(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
         CommentedConfig generalSection = config.get("General");
-        List<Map<String, ?>> GeneralMapping = sectionsMapping.get("General");
+        List<Map<String, ?>> generalMapping = sectionsMapping.get("General");
         @SuppressWarnings("unchecked")
-        Map<String, Boolean> generalDefault = (Map<String, Boolean>) GeneralMapping.get(0);
+        Map<String, Boolean> generalDefault = (Map<String, Boolean>) generalMapping.get(0);
         @SuppressWarnings("unchecked")
-        Map<String, String> generalComments = (Map<String, String>) GeneralMapping.get(1);
+        Map<String, String> generalComments = (Map<String, String>) generalMapping.get(1);
         Map<String, Boolean> rebuild = ensureDefaultPresent(generalSection, "General", generalDefault);
 
         Object isMobsAffected = rebuild.get("isMobsAffected");
@@ -113,11 +113,11 @@ public class ConfigUtils {
 
     public static void validateEffectSection(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
         CommentedConfig effectSection = config.get("Effect");
-        List<Map<String, ?>> EffectMapping = sectionsMapping.get("Effect");
+        List<Map<String, ?>> effectMapping = sectionsMapping.get("Effect");
         @SuppressWarnings("unchecked")
-        Map<String, Number> effectDefault = (Map<String, Number>) EffectMapping.get(0);
+        Map<String, Number> effectDefault = (Map<String, Number>) effectMapping.get(0);
         @SuppressWarnings("unchecked")
-        Map<String, String> effectComments = (Map<String, String>) EffectMapping.get(1);
+        Map<String, String> effectComments = (Map<String, String>) effectMapping.get(1);
         Map<String, Number> rebuild = ensureDefaultPresent(effectSection, "Effect", effectDefault);
 
         // Validate EffectSpeedModifier
@@ -147,7 +147,7 @@ public class ConfigUtils {
             if (!(thresholdValue instanceof Integer)) {
                 Number thresholdDefault = effectDefault.get(key);
                 rebuild.put(key, thresholdDefault);
-                LOGGER.warn("Entry \"Effect.{}\" has invalid type ({}): value is not an integer. Restored to default ({})",
+                LOGGER.warn("Entry \"Effect.{}\" has invalid type ({}): value is not an integer. Restored to default ({}).",
                         key,
                         thresholdValue,
                         thresholdDefault);
@@ -199,7 +199,53 @@ public class ConfigUtils {
     }
 
     public static void validateWeightSection(CommentedFileConfig config, Map<String, List<Map<String, ?>>> sectionsMapping) {
-        //TODO: write validateWeightSection function
+        CommentedConfig weightSection = config.get("Weight");
+        List<Map<String, ?>> weightMapping = sectionsMapping.get("Weight");
+        @SuppressWarnings("unchecked")
+        Map<String, Number> weightDefault = (Map<String, Number>) weightMapping.get(0);
+        @SuppressWarnings("unchecked")
+        Map<String, String> weightComments = (Map<String, String>) weightMapping.get(1);
+        Map<String, Number> rebuild = ensureDefaultPresent(weightSection, "Weight", weightDefault);
 
+        // Validate default and custom entries
+
+        for (Map.Entry<String, Number> entry : rebuild.entrySet()) {
+            Object weightValue = entry.getValue();
+            if (!(weightValue instanceof Number)) {
+                String weightKey = entry.getKey();
+                Number defaultValue = weightDefault.get(weightKey);
+                rebuild.put(weightKey, defaultValue);
+                LOGGER.warn("Default entry \"Weight.{}\" has invalid type ({}): value is not a number. Restored to default ({}).",
+                        weightKey,
+                        weightValue,
+                        defaultValue);
+            }
+        }
+
+        for (Map.Entry<String, Object> entry : weightSection.valueMap().entrySet()) {
+            String weightKey = entry.getKey();
+            if (!rebuild.containsKey(weightKey)) {
+                Object weightValue = entry.getValue();
+                if (!(weightValue instanceof Number)) {
+                    rebuild.put(weightKey, 0f);
+                    LOGGER.warn("Custom entry \"Weight.{}\" has invalid type ({}): value is not a number. Restored to (0.0).",
+                            weightKey,
+                            weightValue);
+                } else {
+                    rebuild.put(weightKey, (Number) weightValue);
+                }
+            }
+        }
+
+        // Rewrite section entries
+
+        weightSection.clear();
+        for (Map.Entry<String, Number> entry : rebuild.entrySet()) {
+            weightSection.set(entry.getKey(), entry.getValue());
+        }
+        for (Map.Entry<String, String> commentEntry : weightComments.entrySet()) {
+            weightSection.setComment(commentEntry.getKey(), commentEntry.getValue());
+        }
+        config.set("Weight", weightSection);
     }
 }
