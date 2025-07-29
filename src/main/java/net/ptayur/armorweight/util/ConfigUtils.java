@@ -7,6 +7,10 @@ import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static net.ptayur.armorweight.ArmorWeight.LOGGER;
@@ -58,7 +62,7 @@ public class ConfigUtils {
         Map<String, T> rebuild = new LinkedHashMap<>();
         if (section == null) {
             rebuild = defaultValues;
-            LOGGER.warn("Section \"{}\" is empty. Restored to default.", sectionName);
+            LOGGER.warn("Section \"{}\" is empty. Restored to default", sectionName);
             return rebuild;
         }
 
@@ -70,7 +74,7 @@ public class ConfigUtils {
             if (section.contains(key)) {
                 value = section.get(key);
             } else {
-                LOGGER.warn("Entry \"{}.{}\" is missing. Restored to default ({}).",
+                LOGGER.warn("Entry \"{}.{}\" is missing. Restored to default ({})",
                         sectionName,
                         key,
                         value);
@@ -94,7 +98,7 @@ public class ConfigUtils {
         Boolean isMobsAffectedDefault = generalDefault.get("isMobsAffected");
         if (!(isMobsAffected instanceof Boolean)) {
             rebuild.put("isMobsAffected", isMobsAffectedDefault);
-            LOGGER.warn("Entry \"General.isMobsAffected\" has invalid type ({}): value is not a boolean. Restored to default ({}).",
+            LOGGER.warn("Entry \"General.isMobsAffected\" has invalid type ({}): value is not a boolean. Restored to default ({})",
                     isMobsAffected,
                     isMobsAffectedDefault);
         }
@@ -126,14 +130,14 @@ public class ConfigUtils {
         Number modifierDefault = effectDefault.get("EffectSpeedModifier");
         if (!(effectModifier instanceof Double modifierValue)) {
             rebuild.put("EffectSpeedModifier", modifierDefault);
-            LOGGER.warn("Entry \"Effect.EffectSpeedModifier\" has invalid type ({}): value is not a double. Restored to default ({}).",
+            LOGGER.warn("Entry \"Effect.EffectSpeedModifier\" has invalid type ({}): value is not a double. Restored to default ({})",
                     effectModifier,
                     modifierDefault);
         } else {
             if (modifierValue < 0 || modifierValue > 1) {
                 rebuild.put("EffectSpeedModifier", modifierDefault);
                 LOGGER.warn("Entry \"Effect.EffectSpeedModifier\" has invalid value ({}): it's outside the valid range [0.0, 1.0]." +
-                                " Restored to default ({}).",
+                                " Restored to default ({})",
                         modifierValue,
                         modifierDefault);
             }
@@ -147,7 +151,7 @@ public class ConfigUtils {
             if (!(thresholdValue instanceof Integer)) {
                 Number thresholdDefault = effectDefault.get(key);
                 rebuild.put(key, thresholdDefault);
-                LOGGER.warn("Entry \"Effect.{}\" has invalid type ({}): value is not an integer. Restored to default ({}).",
+                LOGGER.warn("Entry \"Effect.{}\" has invalid type ({}): value is not an integer. Restored to default ({})",
                         key,
                         thresholdValue,
                         thresholdDefault);
@@ -165,14 +169,14 @@ public class ConfigUtils {
                     int currentDefault = effectDefault.get(key).intValue();
                     if (currentDefault > previousValue) {
                         rebuild.put(key, currentDefault);
-                        LOGGER.warn("Entry \"Effect.{}\" has invalid value ({}): it falls below the previous threshold ({}). Restored to default ({}).",
+                        LOGGER.warn("Entry \"Effect.{}\" has invalid value ({}): it falls below the previous threshold ({}). Restored to default ({})",
                                 key,
                                 value,
                                 previousValue,
                                 currentDefault);
                     } else {
                         rebuild.put(previousKey, effectDefault.get(previousKey));
-                        LOGGER.warn("Entry \"Effect.{}\" has invalid value ({}): it exceeds the next threshold ({}). Restored to default ({}).",
+                        LOGGER.warn("Entry \"Effect.{}\" has invalid value ({}): it exceeds the next threshold ({}). Restored to default ({})",
                                 previousKey,
                                 previousValue,
                                 value,
@@ -215,7 +219,7 @@ public class ConfigUtils {
                 String weightKey = entry.getKey();
                 Number defaultValue = weightDefault.get(weightKey);
                 rebuild.put(weightKey, defaultValue);
-                LOGGER.warn("Default entry \"Weight.{}\" has invalid type ({}): value is not a number. Restored to default ({}).",
+                LOGGER.warn("Default entry \"Weight.{}\" has invalid type ({}): value is not a number. Restored to default ({})",
                         weightKey,
                         weightValue,
                         defaultValue);
@@ -228,7 +232,7 @@ public class ConfigUtils {
                 Object weightValue = entry.getValue();
                 if (!(weightValue instanceof Number)) {
                     rebuild.put(weightKey, 0f);
-                    LOGGER.warn("Custom entry \"Weight.{}\" has invalid type ({}): value is not a number. Restored to (0.0).",
+                    LOGGER.warn("Custom entry \"Weight.{}\" has invalid type ({}): value is not a number. Restored to (0.0)",
                             weightKey,
                             weightValue);
                 } else {
@@ -247,5 +251,26 @@ public class ConfigUtils {
             weightSection.setComment(commentEntry.getKey(), commentEntry.getValue());
         }
         config.set("Weight", weightSection);
+    }
+
+    public static boolean loadConfig(CommentedFileConfig config) {
+        try {
+            config.load();
+            return true;
+        } catch (Exception e) {
+            Path configPath = Paths.get("config","armorweight_common.toml");
+            String brokenString = "armorweight_common_broken_" + System.currentTimeMillis() + ".toml";
+            Path brokenPath = Paths.get("config", brokenString);
+            LOGGER.warn("Failed to load config file. {}", e.getMessage());
+
+            try {
+                Files.move(configPath, brokenPath);
+                LOGGER.warn("Broken config was moved to \"{}\"", brokenString);
+            } catch (IOException ioE) {
+                LOGGER.warn("Failed to move broken config. {}", ioE.getMessage());
+            }
+
+            return false;
+        }
     }
 }

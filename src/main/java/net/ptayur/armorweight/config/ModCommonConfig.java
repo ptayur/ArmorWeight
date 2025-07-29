@@ -66,8 +66,9 @@ public class ModCommonConfig {
     }};
 
     public static void initConfig() {
-        COMMON_CONFIG.load();
-        if (COMMON_CONFIG.isEmpty()) {
+        boolean isLoaded = ConfigUtils.loadConfig(COMMON_CONFIG);
+        if (COMMON_CONFIG.isEmpty() || !isLoaded) {
+            COMMON_CONFIG.clear();
             ConfigUtils.setDefaultSections(COMMON_CONFIG, SECTIONS_MAPPING);
         } else {
             ConfigUtils.validateGeneralSection(COMMON_CONFIG, SECTIONS_MAPPING);
