@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static net.ptayur.armorweight.ArmorWeight.LOGGER;
@@ -105,6 +107,9 @@ public class ConfigUtils {
 
         // Rewrite section entries
 
+        if (generalSection == null) {
+            generalSection = config.createSubConfig();
+        }
         generalSection.clear();
         for (Map.Entry<String, Boolean> entry : rebuild.entrySet()) {
             generalSection.set(entry.getKey(), entry.getValue());
@@ -192,6 +197,9 @@ public class ConfigUtils {
 
         // Rewrite section entries
 
+        if (effectSection == null) {
+            effectSection = config.createSubConfig();
+        }
         effectSection.clear();
         for (Map.Entry<String, Number> entry : rebuild.entrySet()) {
             effectSection.set(entry.getKey(), entry.getValue());
@@ -210,6 +218,9 @@ public class ConfigUtils {
         @SuppressWarnings("unchecked")
         Map<String, String> weightComments = (Map<String, String>) weightMapping.get(1);
         Map<String, Number> rebuild = ensureDefaultPresent(weightSection, "Weight", weightDefault);
+        if (weightSection == null) {
+            weightSection = config.createSubConfig();
+        }
 
         // Validate default and custom entries
 
@@ -259,7 +270,8 @@ public class ConfigUtils {
             return true;
         } catch (Exception e) {
             Path configPath = Paths.get("config","armorweight_common.toml");
-            String brokenString = "armorweight_common_broken_" + System.currentTimeMillis() + ".toml";
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH.mm.ss"));
+            String brokenString = "armorweight_common_broken_" + timestamp + ".toml";
             Path brokenPath = Paths.get("config", brokenString);
             LOGGER.warn("Failed to load config file. {}", e.getMessage());
 
@@ -269,7 +281,6 @@ public class ConfigUtils {
             } catch (IOException ioE) {
                 LOGGER.warn("Failed to move broken config. {}", ioE.getMessage());
             }
-
             return false;
         }
     }
