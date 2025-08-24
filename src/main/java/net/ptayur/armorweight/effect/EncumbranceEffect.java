@@ -7,8 +7,11 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
 import net.ptayur.armorweight.config.ModCommonConfig;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 public class EncumbranceEffect extends MobEffect {
@@ -43,5 +46,10 @@ public class EncumbranceEffect extends MobEffect {
             attribute.removeModifier(SLOWNESS_MODIFIER_UUID);
         }
         super.removeAttributeModifiers(entity, attributeMap, amplifier);
+    }
+
+    @Override
+    public List<ItemStack> getCurativeItems() {
+        return Collections.emptyList();
     }
 }
